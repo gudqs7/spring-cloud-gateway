@@ -145,10 +145,12 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 
 		@Override
 		protected T doBind() {
+			// this.configurable.getConfigClass() 的值为 Config.class
+			// 在每个具体的 PredicateFactory(如 PathRoutePredicateFactory) 的构造方法中的 super(xxx) 定义.
 			Bindable<T> bindable = Bindable.of(this.configurable.getConfigClass());
 			T bound = bindOrCreate(bindable, this.normalizedProperties, this.configurable.shortcutFieldPrefix(),
 					/* this.name, */this.service.validator.get(), this.service.conversionService.get());
-
+			// 通过 binder 将 normalizedProperties 中数据绑定到 config 中, 然后返回.
 			return bound;
 		}
 

@@ -49,6 +49,7 @@ public class GatewayReactiveLoadBalancerClientAutoConfiguration {
 	@ConditionalOnEnabledGlobalFilter
 	public ReactiveLoadBalancerClientFilter gatewayLoadBalancerClientFilter(LoadBalancerClientFactory clientFactory,
 			GatewayLoadBalancerProperties properties, LoadBalancerProperties loadBalancerProperties) {
+		// 这里加入一个 LoadBalancer 的 Filter, 用于处理 lb:// 开头的 url, 将 host 转换成具体的 ip(或域名)
 		return new ReactiveLoadBalancerClientFilter(clientFactory, properties, loadBalancerProperties);
 	}
 

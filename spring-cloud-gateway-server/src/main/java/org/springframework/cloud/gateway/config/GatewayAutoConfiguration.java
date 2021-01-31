@@ -219,6 +219,8 @@ public class GatewayAutoConfiguration {
 	public RouteLocator routeDefinitionRouteLocator(GatewayProperties properties,
 			List<GatewayFilterFactory> gatewayFilters, List<RoutePredicateFactory> predicates,
 			RouteDefinitionLocator routeDefinitionLocator, ConfigurationService configurationService) {
+		// 这里注入的 routeDefinitionLocator 决定使用什么加载 RouteDefinition.
+		// 默认是 CompositeRouteDefinitionLocator, 即混合的, 可支持多个一起混合使用.
 		return new RouteDefinitionRouteLocator(routeDefinitionLocator, predicates, gatewayFilters, properties,
 				configurationService);
 	}
@@ -239,6 +241,7 @@ public class GatewayAutoConfiguration {
 
 	@Bean
 	public FilteringWebHandler filteringWebHandler(List<GlobalFilter> globalFilters) {
+		// 加入一个 WebHandler 来处理 GatewayFilter
 		return new FilteringWebHandler(globalFilters);
 	}
 
@@ -250,6 +253,8 @@ public class GatewayAutoConfiguration {
 	@Bean
 	public RoutePredicateHandlerMapping routePredicateHandlerMapping(FilteringWebHandler webHandler,
 			RouteLocator routeLocator, GlobalCorsProperties globalCorsProperties, Environment environment) {
+		// 加入一个 HandlerMapping 用于根据谓语查找 handle
+		// 注入 FilteringWebHandler, 以使用 SimpleHandlerAdapter 适配器执行 Route 的跳转操作.
 		return new RoutePredicateHandlerMapping(webHandler, routeLocator, globalCorsProperties, environment);
 	}
 
@@ -281,6 +286,7 @@ public class GatewayAutoConfiguration {
 	@Bean
 	@ConditionalOnProperty(name = "spring.cloud.gateway.x-forwarded.enabled", matchIfMissing = true)
 	public XForwardedHeadersFilter xForwardedHeadersFilter() {
+		// 添加 HTTPHeader 拦截器为请求头添加 x-forwarded 信息.
 		return new XForwardedHeadersFilter();
 	}
 
@@ -337,6 +343,7 @@ public class GatewayAutoConfiguration {
 	}
 
 	// Predicate Factory beans
+	// 添加谓语实现对应的 factory
 
 	@Bean
 	@ConditionalOnEnabledPredicate
@@ -418,6 +425,7 @@ public class GatewayAutoConfiguration {
 	}
 
 	// GatewayFilter Factory beans
+	// 添加 gateway filter 各种实现对应的工厂
 
 	@Bean
 	@ConditionalOnEnabledFilter

@@ -89,6 +89,8 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 						logger.debug("Mapping [" + getExchangeDesc(exchange) + "] to " + r);
 					}
 
+					// 这里放入 route 对象到 exchange 中, 好在 FilterWebHandler 中获取...
+					// 存好 Route 后, 返回 webHandler 对象, 即 FilteringWebHandler
 					exchange.getAttributes().put(GATEWAY_ROUTE_ATTR, r);
 					return Mono.just(webHandler);
 				}).switchIfEmpty(Mono.empty().then(Mono.fromRunnable(() -> {
@@ -119,12 +121,17 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	}
 
 	protected Mono<Route> lookupRoute(ServerWebExchange exchange) {
+		// 从所有的 routes 中, 调用每个对象的 r.getPredicate().apply() 通过谓词判断是否匹配
+		// 然后取 next() 即第一个值返回.
 		return this.routeLocator.getRoutes()
 				// individually filter routes so that filterWhen error delaying is not a
 				// problem
 				.concatMap(route -> Mono.just(route).filterWhen(r -> {
 					// add the current route we are testing
 					exchange.getAttributes().put(GATEWAY_PREDICATE_ROUTE_ATTR, r.getId());
+					// 执行之前转成的 AsyncPredicate, 调用 AsyncPredicate.DefaultAsyncPredicate.apply()
+					// 会调用 delegate.test(), delegate 为 RoutePredicateFactory.apply() 返回的 GatewayPredicate 对象
+					// 内含具体逻辑(如 BeforeRoutePredicateFactory.apply() 返回的对象的 test 实现为: 将配置的参数当做时间与当前时间对比
 					return r.getPredicate().apply(exchange);
 				})
 						// instead of immediately stopping main flux due to error, log and

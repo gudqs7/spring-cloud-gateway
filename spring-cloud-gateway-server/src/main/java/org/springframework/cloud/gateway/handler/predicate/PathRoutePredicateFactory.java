@@ -66,6 +66,7 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 
 	@Override
 	public List<String> shortcutFieldOrder() {
+		// 作用是标记 Config.class 要怎么绑定值...
 		return Arrays.asList("patterns", MATCH_TRAILING_SLASH);
 	}
 

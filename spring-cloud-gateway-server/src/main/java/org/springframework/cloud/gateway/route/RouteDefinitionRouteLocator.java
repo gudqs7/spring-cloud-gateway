@@ -92,6 +92,7 @@ public class RouteDefinitionRouteLocator implements RouteLocator {
 
 	@Override
 	public Flux<Route> getRoutes() {
+		// 获取 Route 集合, 并将字符串的谓词配置转成可执行的 AsyncPredicate, 但还没执行判断.
 		Flux<Route> routes = this.routeDefinitionLocator.getRouteDefinitions().map(this::convertToRoute);
 
 		if (!gatewayProperties.isFailOnRouteDefinitionError()) {
@@ -113,7 +114,12 @@ public class RouteDefinitionRouteLocator implements RouteLocator {
 	}
 
 	private Route convertToRoute(RouteDefinition routeDefinition) {
+		// 将 routeDefinition 中的 Predicate 数据(如 Host=xxx, xxx) 转成可执行的 AsyncPredicate
+		//    执行原理是 apply() 中 调用 delegate.test(), 则会进入具体的 test 中.
 		AsyncPredicate<ServerWebExchange> predicate = combinePredicates(routeDefinition);
+
+		// 这里将 filters 配置解析成 GatewayFilter 对象, 存入 Filter
+		// 其逻辑与 Predicate 一模一样, 都是调用 name 对应工厂的 apply() 得到一个 GatewayFilter
 		List<GatewayFilter> gatewayFilters = getFilters(routeDefinition);
 
 		return Route.async(routeDefinition).asyncPredicate(predicate).replaceFilters(gatewayFilters).build();
@@ -181,6 +187,7 @@ public class RouteDefinitionRouteLocator implements RouteLocator {
 	}
 
 	private AsyncPredicate<ServerWebExchange> combinePredicates(RouteDefinition routeDefinition) {
+		// 解析 PredicateDefinition 合成一个 AsyncPredicate
 		List<PredicateDefinition> predicates = routeDefinition.getPredicates();
 		if (predicates == null || predicates.isEmpty()) {
 			// this is a very rare case, but possible, just match all
